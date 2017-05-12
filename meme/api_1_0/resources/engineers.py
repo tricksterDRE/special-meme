@@ -4,7 +4,7 @@ from meme.models import Engineer
 from meme.schemas import EngineerSchema
 
 
-class EngineersResource(Resource):
+class EngineerResource(Resource):
     """REST API resource for /engineers/<id> endpoint"""
 
     def __init__(self):

@@ -31,11 +31,11 @@ class Task(db.Model):
 
     report = db.relationship('Report', backref='task', lazy='dynamic')
 
-    def __init__(self, description, full_description, start_time, engineer_id):
+    def __init__(self, description, full_description, start_time, engineer):
         self.description = description
         self.full_description = full_description
         self.start_time = start_time
-        self.engineer_id = engineer_id
+        self.engineer = engineer
 
     def __repr__(self):
         return '<id {}'.format(self.id)
@@ -56,12 +56,12 @@ class Report(db.Model):
 
     photo = db.relationship('Photo', backref='report', lazy='dynamic')
 
-    def __init_(self, task_id, comment, end_time, gps_longitude, gps_latitude):
-        self.task_id = task_id
+    def __init_(self, comment, end_time, gps_longitude, gps_latitude, task):
         self.comment = comment
         self.end_time = end_time
         self.gps_latitude = gps_latitude
         self.gps_longitude = gps_longitude
+        self.task = task
 
     def __repr__(self):
         return '<id {}'.format(self.id)
@@ -77,8 +77,8 @@ class Photo(db.Model):
 
     link = db.Column(db.String())
 
-    def __init__(self, report_id, link):
-        self.report_id = report_id
+    def __init__(self, report, link):
+        self.report = report
         self.link = link
 
     def __repr__(self):
