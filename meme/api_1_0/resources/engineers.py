@@ -35,7 +35,7 @@ class EngineersListResource(Resource):
         engineer_name = parser.parse_args()['name']
 
         if engineer_name is not None:
-            engineer = Engineer(name=engineer_name)
+            engineer = Engineer(full_name=engineer_name)
 
             db.session.add(engineer)
             db.session.commit()

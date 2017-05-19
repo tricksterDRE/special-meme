@@ -6,15 +6,15 @@ class Engineer(db.Model):
 
     __tablename__ = 'Engineers'
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String())
+    id_engineer = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    full_name = db.Column(db.String())
     tasks = db.relationship('Task', backref='engineer', lazy='dynamic')
 
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, full_name):
+        self.full_name = full_name
 
     def __repr__(self):
-        return '<id {}'.format(self.id)
+        return '<id {}'.format(self.id_engineer)
 
 
 class Task(db.Model):
@@ -22,23 +22,23 @@ class Task(db.Model):
 
     __tablename__ = 'Tasks'
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    engineer_id = db.Column(db.Integer, db.ForeignKey('Engineers.id'))
+    id_task = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_engineer = db.Column(db.Integer, db.ForeignKey('Engineers.id_engineer'))
 
-    description = db.Column(db.String())
-    full_description = db.Column(db.String())
+    task_name = db.Column(db.String())
+    task_description = db.Column(db.String())
     start_time = db.Column(db.DateTime)
 
     report = db.relationship('Report', backref='task', lazy='dynamic')
 
-    def __init__(self, description, full_description, start_time, engineer):
-        self.description = description
-        self.full_description = full_description
+    def __init__(self, task_name, task_description, start_time, engineer):
+        self.task_name = task_name
+        self.task_description = task_description
         self.start_time = start_time
         self.engineer = engineer
 
     def __repr__(self):
-        return '<id {}'.format(self.id)
+        return '<id {}'.format(self.id_task)
 
 
 class Report(db.Model):
@@ -46,8 +46,8 @@ class Report(db.Model):
 
     __tablename__ = 'Reports'
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    task_id = db.Column(db.Integer, db.ForeignKey('Tasks.id'))
+    id_report = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_task = db.Column(db.Integer, db.ForeignKey('Tasks.id_task'))
 
     comment = db.Column(db.String())
     end_time = db.Column(db.DateTime)
@@ -64,7 +64,7 @@ class Report(db.Model):
         self.task = task
 
     def __repr__(self):
-        return '<id {}'.format(self.id)
+        return '<id {}'.format(self.id_report)
 
 
 class Photo(db.Model):
@@ -72,8 +72,8 @@ class Photo(db.Model):
 
     __tablename__ = 'Photos'
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    report_id = db.Column(db.Integer, db.ForeignKey('Reports.id'))
+    id_photo = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_report = db.Column(db.Integer, db.ForeignKey('Reports.id_report'))
 
     link = db.Column(db.String())
 
@@ -82,4 +82,4 @@ class Photo(db.Model):
         self.link = link
 
     def __repr__(self):
-        return '<id {}'.format(self.id)
+        return '<id {}'.format(self.id_photo)

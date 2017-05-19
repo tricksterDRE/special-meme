@@ -63,7 +63,7 @@ class TasksListResource(Resource):
         if assignee_engineer is None:
             return {'error': 'incorrect engineer_id'}, 400
 
-        task = Task(description=description, full_description=full_description, start_time=start_time,
+        task = Task(task_name=description, task_description=full_description, start_time=start_time,
                     engineer=assignee_engineer)
 
         db.session.add(task)
