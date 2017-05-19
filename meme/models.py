@@ -6,7 +6,7 @@ class Engineer(db.Model):
 
     __tablename__ = 'Engineers'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String())
     tasks = db.relationship('Task', backref='engineer', lazy='dynamic')
 
@@ -22,7 +22,7 @@ class Task(db.Model):
 
     __tablename__ = 'Tasks'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     engineer_id = db.Column(db.Integer, db.ForeignKey('Engineers.id'))
 
     description = db.Column(db.String())
@@ -46,7 +46,7 @@ class Report(db.Model):
 
     __tablename__ = 'Reports'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     task_id = db.Column(db.Integer, db.ForeignKey('Tasks.id'))
 
     comment = db.Column(db.String())
@@ -72,7 +72,7 @@ class Photo(db.Model):
 
     __tablename__ = 'Photos'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     report_id = db.Column(db.Integer, db.ForeignKey('Reports.id'))
 
     link = db.Column(db.String())
