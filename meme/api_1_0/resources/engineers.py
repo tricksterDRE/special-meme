@@ -1,57 +1,62 @@
 from flask_restful import Resource, reqparse
+from flask import jsonify
 from meme import db
 from meme.models import Engineer, Task
-from meme.schemas import EngineerSchema, TaskSchema
+from meme.schemas import engineer_schema, task_schema
 
 
-class EngineerResource(Resource):
-    """REST API resource for /engineers/<id> endpoint"""
-
-    def __init__(self):
-        self.schema = EngineerSchema()
+class EngineerById(Resource):
+    """REST API resource for getting engineer by id"""
 
     def get(self, engineer_id):
-        """GET /api/v1/engineers/<id> - returns engineer's data by it's id"""
         engineer = Engineer.query.get(engineer_id)
-        return self.schema.jsonify(engineer)
+
+        if not engineer:
+            return {}, 404
+
+        data, errors = engineer_schema.jsonify(engineer)
+
+        if errors:
+            return jsonify(errors), 404
+
+        return jsonify(data)
 
 
-class EngineersListResource(Resource):
-    """REST API resource for /engineers endpoint"""
-
-    def __init__(self):
-        self.schema = EngineerSchema()
+class Engineers(Resource):
+    """REST API resource for getting list of all engineers and creating engineer"""
 
     def get(self):
-        """GET /api/v1/engineers - returns list of all engineers"""
-        engineers = Engineer.query.all()
+        all_engineers = Engineer.query.all()
+        data, errors = engineer_schema.dump(all_engineers, many=True)
 
-        return self.schema.jsonify(engineers, many=True)
+        return data
 
     def post(self):
-        """POST /api/v1/engineers - creates engineer with specified name"""
         parser = reqparse.RequestParser()
-        parser.add_argument('name', type=str, help='name of the engineer')
-        engineer_name = parser.parse_args()['name']
+        parser.add_argument('full_name', type=str, help='name of the engineer')
+        post_args = parser.parse_args()
 
-        if engineer_name is not None:
-            engineer = Engineer(full_name=engineer_name)
+        engineer, errors = engineer_schema.load(post_args)
 
-            db.session.add(engineer)
-            db.session.commit()
+        if errors:
+            return jsonify(errors), 400
 
-            return self.schema.jsonify(engineer)
-        else:
-            return {}, 400
+        db.session.add(engineer)
+        db.session.commit()
+
+        return {"id": engineer.id_engineer}
 
 
-class EngineersTasksResource(Resource):
-    """REST API resource for /engineers/<int:engineer_id>/tasks"""
-    def __init__(self):
-        self.schema = TaskSchema()
+class EngineerTasksList(Resource):
+    """REST API resource for getting list of engineers tasks"""
 
     def get(self, engineer_id):
         engineer = Engineer.query.get(engineer_id)
-        tasks = Task.query.filter_by(engineer=engineer)
 
-        return self.schema.jsonify(tasks, many=True)
+        if not engineer:
+            return {}, 404
+
+        all_tasks = Task.query.filter_by(Task.id_engineer == engineer)
+        data, errors = task_schema.dump(all_tasks, many=True)
+
+        return data

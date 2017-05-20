@@ -7,7 +7,7 @@ class Engineer(db.Model):
     __tablename__ = 'Engineers'
 
     id_engineer = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    full_name = db.Column(db.String())
+    full_name = db.Column(db.String(), nullable=False)
     tasks = db.relationship('Task', backref='engineer', lazy='dynamic')
 
     def __init__(self, full_name):
@@ -25,16 +25,19 @@ class Task(db.Model):
     id_task = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_engineer = db.Column(db.Integer, db.ForeignKey('Engineers.id_engineer'))
 
-    task_name = db.Column(db.String())
-    task_description = db.Column(db.String())
-    start_time = db.Column(db.DateTime)
+    task_name = db.Column(db.String(), nullable=False)
+    task_description = db.Column(db.String(), nullable=False)
+    start_time = db.Column(db.DateTime, nullable=False)
+
+    photo_required = db.Column(db.Boolean, default=False)
 
     report = db.relationship('Report', backref='task', lazy='dynamic')
 
-    def __init__(self, task_name, task_description, start_time, engineer):
+    def __init__(self, task_name, task_description, start_time, photo_required, engineer):
         self.task_name = task_name
         self.task_description = task_description
         self.start_time = start_time
+        self.photo_required = photo_required
         self.engineer = engineer
 
     def __repr__(self):
@@ -49,10 +52,10 @@ class Report(db.Model):
     id_report = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_task = db.Column(db.Integer, db.ForeignKey('Tasks.id_task'))
 
-    comment = db.Column(db.String())
-    end_time = db.Column(db.DateTime)
-    gps_longitude = db.Column(db.Float)
-    gps_latitude = db.Column(db.Float)
+    comment = db.Column(db.String(), nullable=False)
+    end_time = db.Column(db.DateTime, nullable=False)
+    gps_longitude = db.Column(db.Float, nullable=False)
+    gps_latitude = db.Column(db.Float, nullable=False)
 
     photo = db.relationship('Photo', backref='report', lazy='dynamic')
 
@@ -75,7 +78,7 @@ class Photo(db.Model):
     id_photo = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_report = db.Column(db.Integer, db.ForeignKey('Reports.id_report'))
 
-    link = db.Column(db.String())
+    link = db.Column(db.String(), nullable=False)
 
     def __init__(self, report, link):
         self.report = report
