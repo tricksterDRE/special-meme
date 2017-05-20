@@ -12,7 +12,7 @@ class EngineerById(Resource):
         engineer = Engineer.query.get(engineer_id)
 
         if not engineer:
-            return {}, 404
+            return {'error': 'engineer not found'}, 404
 
         return engineer_schema.jsonify(engineer)
 
@@ -39,19 +39,19 @@ class Engineers(Resource):
         db.session.add(engineer)
         db.session.commit()
 
-        return {"id": engineer.id_engineer}
+        return {'id': engineer.id_engineer}
 
 
-class EngineerTasksList(Resource):
+class EngineerTasks(Resource):
     """REST API resource for getting list of engineers tasks"""
 
     def get(self, engineer_id):
         engineer = Engineer.query.get(engineer_id)
 
         if not engineer:
-            return {}, 404
+            return {'error': 'engineer not found'}, 404
 
         all_tasks = Task.query.filter_by(engineer=engineer)
         data, errors = task_schema.dump(all_tasks, many=True)
 
-        return data
+        return jsonify(data)

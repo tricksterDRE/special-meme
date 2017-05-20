@@ -24,7 +24,7 @@ class TaskSchema(ma.ModelSchema):
 
     class Meta:
         model = Task
-        exclude = ["id_task", "id_engineer"]
+        exclude = ["id_engineer"]
 
 
 class EngineerSchema(ma.ModelSchema):

@@ -1,144 +1,160 @@
 from datetime import datetime
 from flask_restful import Resource, reqparse
+from flask import jsonify
 from meme import db
 from meme.models import Task, Engineer, Photo, Report
-from meme.schemas import TaskSchema
+from meme.schemas import task_schema
 
 
-class TaskResource(Resource):
-    """REST API resource for /tasks/<id> """
-
-    def __init__(self):
-        self.schema = TaskSchema()
+class TaskById(Resource):
+    """REST API resource for getting and updating task by id """
 
     def get(self, task_id):
-        """GET /api/v1/tasks/<id> - returns task data by id"""
         task = Task.query.get(task_id)
-        return self.schema.jsonify(task)
 
-    def put(self, task_id):
-        """PUT /api/v1/tasks/<id> - updates task data by id"""
-        pass
+        if not task:
+            return {'error': 'task not found'}, 404
 
-
-class TasksListResource(Resource):
-    """REST API FOR /tasks endpoint"""
-
-    def __init__(self):
-        self.schema = TaskSchema()
-        pass
-
-    def get(self):
-        """GET /api/v1/tasks - return all tasks data"""
-        tasks = Task.query.all()
-        return self.schema.jsonify(tasks, many=True)
-
-    def post(self):
-        """POST /api/v1/tasks - creates task with specified description 
-                for specified engineer
-        """
-        parser = reqparse.RequestParser()
-        parser.add_argument('engineer_id', type=int, help='id of the assignee engineer')
-        parser.add_argument('description', type=str, help='task description')
-        parser.add_argument('full_description', type=str, help='task full description')
-        parser.add_argument('start_time', type=str, help='task start time')
-
-        args = parser.parse_args()
-
-        engineer_id = args['engineer_id']
-        description = args['description']
-        full_description = args['full_description']
-        start_time_str = args['start_time']
-
-        if engineer_id is None or description is None or start_time_str is None:
-            return {'error': 'missing required parameters'}, 400
-
-        try:
-            start_time = datetime.strptime(start_time_str, '%d.%m.%Y %H:%M:%S')
-        except ValueError:
-            return {'error': 'incorrect start date format {}'.format(start_time_str)}, 400
-
-        assignee_engineer = Engineer.query.get(engineer_id)
-
-        if assignee_engineer is None:
-            return {'error': 'incorrect engineer_id'}, 400
-
-        task = Task(task_name=description, task_description=full_description, start_time=start_time,
-                    engineer=assignee_engineer)
-
-        db.session.add(task)
-        db.session.commit()
-
-        return self.schema.jsonify(task)
-
-
-class TasksFinishResource(Resource):
-    def __init__(self):
-        pass
+        return task_schema.jsonify(task)
 
     def post(self, task_id):
         task = Task.query.get(task_id)
 
-        if task is None:
-            return {'error': 'incorrect input sequence, use Einstein-Shrodinger quantum sequencer'}, 400
+        if not task:
+            return {'error': 'task not found'}, 404
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('task_name', type=str, help='task description')
+        parser.add_argument('task_description', type=str, help='task full description')
+        parser.add_argument('start_time', type=str, help='task start time')
+        parser.add_argument('photo_required', type=bool, help='are photo required')
+        post_args = parser.parse_args()
+
+        task, errors = task_schema.load(jsonify(post_args), instance=task)
+
+        if errors:
+            return jsonify(errors), 400
+
+        db.session.add(task)
+        db.session.commit()
+
+        return {'status': 'updated', "id": task.id_task}
+
+
+class Tasks(Resource):
+    """REST API resource for getting list of all tasks and creating task for specified engineer"""
+
+    def get(self):
+        tasks = Task.query.all()
+        data, errors = task_schema.dump(tasks, many=True)
+        return jsonify(data)
+
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('id_engineer', type=int, help='id of the assignee engineer')
+        parser.add_argument('task_name', type=str, help='task description')
+        parser.add_argument('task_description', type=str, help='task full description')
+        parser.add_argument('start_time', type=str, help='task start time')
+        parser.add_argument('photo_required', type=bool, help='are photo required')
+        post_args = parser.parse_args()
+
+        try:
+            assignee_engineer = Engineer.query.get(post_args['id_engineer'])
+
+            if not assignee_engineer:
+                return {'error': 'engineer not found'}, 404
+
+            try:
+                start_time = datetime.strptime(post_args['start_time'], '%d.%m.%Y %H:%M:%S')
+            except ValueError:
+                return {'error': 'incorrect date format'}, 400
+
+            task = Task(task_name=post_args['task_name'], task_description=post_args['task_description'],
+                        start_time=start_time, photo_required=post_args['photo_required'], engineer=assignee_engineer)
+
+            db.session.add(task)
+            db.session.commit()
+
+            return {'status': 'created', 'id': task.id_task}
+        except KeyError:
+            return {'error': 'missing required parameter'}, 400
+
+
+class TasksFinalizer(Resource):
+    """REST API resource for finishing task with report"""
+    def post(self, task_id):
+        task = Task.query.get(task_id)
+
+        if not task:
+            return {'error': 'task not found'}, 404
 
         parser = reqparse.RequestParser()
         parser.add_argument('comment', type=str, help='finish comment')
         parser.add_argument('end_time', type=str, help='finish time')
         parser.add_argument('gps_longitude', type=str, help='longtitude')
         parser.add_argument('gps_latitude', type=str, help='latitude')
-        parser.add_argument('photo_link', type=str, help='photo link')
+        parser.add_argument('link', type=str, help='photo link')
+        post_args = parser.parse_args()
 
-        args = parser.parse_args()
-
-        comment = args['comment']
-        end_time_str = args['end_time']
-        gps_longitude = args['gps_longitude']
-        gps_latitude = args['gps_latitude']
-        photo_link = args['photo_link']
+        post_args.setdefault('link', '')
 
         try:
-            end_time = datetime.strptime(end_time_str, '%d.%m.%Y %H:%M:%S')
+            report_args = {
+                'comment': post_args['comment'],
+                'end_time': post_args['end_time'],
+                'gps_longitude': post_args['gps_longitude'],
+                'gps_latitude': post_args['gps_latitude'],
+                'link': post_args['link']
+            }
+        except KeyError:
+            return {'error': 'missing required parameter'}, 400
+
+        if task.photo_required and report_args['link'] == '':
+            return {'error': 'photo link required to finish task'}, 400
+
+        try:
+            end_time = datetime.strptime(report_args['end_time'], '%d.%m.%Y %H:%M:%S')
         except ValueError:
-            return {'error': 'incorrect start date format {}'.format(end_time_str)}, 400
+            return {'error': 'incorrect date format'}, 400
 
-        finish_report = Report(comment=comment, gps_longitude=gps_longitude, gps_latitude=gps_latitude,
-                               end_time=end_time, task=task)
+        report = Report(comment=report_args['comment'], gps_longitude=report_args['gps_longitude'],
+                        gps_latitude=report_args['gps_latitude'] ,end_time=end_time, task=task)
 
-        db.session.add(finish_report)
+        db.session.add(report)
 
-        if photo_link is not None:
-            photo = Photo(report=finish_report, link=photo_link)
+        if task.photo_required:
+            photo = Photo(report=report, link=post_args['link'])
             db.session.add(photo)
 
         db.session.commit()
 
-        return {}, 200
+        return {'status': 'finished', 'id': task.id_task}, 200
 
 
-class TasksTimeResource(Resource):
-    def __init__(self):
-        self.schema = TaskSchema()
-
+class TasksInPeriod(Resource):
+    """REST API resource for getting list of all tasks created in time period"""
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('period_start', type=str, help='start time')
         parser.add_argument('period_end', type=str, help='end time')
+        post_args = parser.parse_args()
 
-        args = parser.parse_args()
-
-        period_start = args['period_start']
-        period_end = args['period_end']
+        try:
+            period_start = post_args['period_start']
+            period_end = post_args['period_end']
+        except KeyError:
+            return {'error': 'missing required parameter'}, 400
 
         try:
             period_start = datetime.strptime(period_start, '%d.%m.%Y %H:%M:%S')
             period_end = datetime.strptime(period_end, '%d.%m.%Y %H:%M:%S')
         except ValueError:
-            return {'error': 'incorrect start date format {} {}'.format(period_start, period_end)}, 400
+            return {'error': 'incorrect date format'}, 400
 
         tasks_by_period = Task.query.filter(Task.start_time >= period_start).filter(Task.start_time <= period_end).all()
+        data, errors = task_schema.dump(tasks_by_period, many=True)
 
-        return self.schema.jsonify(tasks_by_period, many=True)
+        return jsonify(data)
 
 
 
