@@ -14,12 +14,7 @@ class EngineerById(Resource):
         if not engineer:
             return {}, 404
 
-        data, errors = engineer_schema.jsonify(engineer)
-
-        if errors:
-            return jsonify(errors), 404
-
-        return jsonify(data)
+        return engineer_schema.jsonify(engineer)
 
 
 class Engineers(Resource):
@@ -56,7 +51,7 @@ class EngineerTasksList(Resource):
         if not engineer:
             return {}, 404
 
-        all_tasks = Task.query.filter_by(Task.id_engineer == engineer)
+        all_tasks = Task.query.filter_by(engineer=engineer)
         data, errors = task_schema.dump(all_tasks, many=True)
 
         return data

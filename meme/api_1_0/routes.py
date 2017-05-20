@@ -6,7 +6,7 @@ from meme.api_1_0.resources.tasks import TaskResource, TasksListResource, TasksF
 api_v1.add_resource(EngineerById, '/engineers/<int:engineer_id>')
 
 # GET /api/v1/engineers - returns list of all engineers
-# POST { "full_name" : "Donald McCryak" } /api/v1/engineers - creates engineer
+# POST { "full_name" : "John Smith Jr." } /api/v1/engineers - creates engineer
 api_v1.add_resource(Engineers, '/engineers')
 
 # GET /api/v1/engineers/<int:engineer_id>/tasks - returns list of all tasks assigned to engineer
