@@ -1,28 +1,24 @@
 from flask_restful import Resource, reqparse
-from flask import jsonify
-from meme import db
-from meme.models import Engineer, Task
-from meme.schemas import engineer_schema, task_schema
+from meme import db, ma
+from meme.models import Engineer
 
 
-class EngineerById(Resource):
-    """REST API resource for getting engineer by id"""
-
-    def get(self, engineer_id):
-        engineer = Engineer.query.get(engineer_id)
-
-        if not engineer:
-            return {'error': 'engineer not found'}, 404
-
-        return engineer_schema.jsonify(engineer)
+class EngineerSchema(ma.ModelSchema):
+    """Marshmallow "serialization schema for Engineer db Table"""
+    class Meta:
+        model = Engineer
+        exclude = ["tasks"]
 
 
 class Engineers(Resource):
     """REST API resource for getting list of all engineers and creating engineer"""
 
+    def __init__(self):
+        self.engineer_schema = EngineerSchema()
+
     def get(self):
         all_engineers = Engineer.query.all()
-        data, errors = engineer_schema.dump(all_engineers, many=True)
+        data, errors = self.engineer_schema.dump(all_engineers, many=True)
 
         return data
 
@@ -31,27 +27,12 @@ class Engineers(Resource):
         parser.add_argument('full_name', type=str, help='name of the engineer')
         post_args = parser.parse_args()
 
-        engineer, errors = engineer_schema.load(post_args)
+        engineer, errors = self.engineer_schema.load(post_args)
 
         if errors:
-            return jsonify(errors), 400
+            return {'status': 'error', 'error': 'missing required parameter'}, 400
 
         db.session.add(engineer)
         db.session.commit()
 
-        return {'id': engineer.id_engineer}
-
-
-class EngineerTasks(Resource):
-    """REST API resource for getting list of engineers tasks"""
-
-    def get(self, engineer_id):
-        engineer = Engineer.query.get(engineer_id)
-
-        if not engineer:
-            return {'error': 'engineer not found'}, 404
-
-        all_tasks = Task.query.filter_by(engineer=engineer)
-        data, errors = task_schema.dump(all_tasks, many=True)
-
-        return jsonify(data)
+        return {'status': 'created', 'id': engineer.id_engineer}, 200

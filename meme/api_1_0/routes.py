@@ -1,9 +1,11 @@
 from meme.api_1_0 import api_v1
-from meme.api_1_0.resources.engineers import EngineerById, Engineers, EngineerTasks
-from meme.api_1_0.resources.tasks import TaskById, Tasks, TasksFinalizer, TasksInPeriod
 
-# GET /api/v1/engineers/<id> - returns engineer's data by it's id
-api_v1.add_resource(EngineerById, '/engineers/<int:engineer_id>')
+from meme.api_1_0.resources.engineers import Engineers
+from meme.api_1_0.resources.engineer_tasks import EngineerTasks
+
+from meme.api_1_0.resources.tasks import Tasks
+from meme.api_1_0.resources.tasks_finalizer import TasksFinalizer
+from meme.api_1_0.resources.tasks_in_period import TasksInPeriod
 
 # GET /api/v1/engineers - returns list of all engineers
 # POST
@@ -15,17 +17,6 @@ api_v1.add_resource(Engineers, '/engineers')
 
 # GET /api/v1/engineers/<id>/tasks - returns list of all tasks assigned to engineer
 api_v1.add_resource(EngineerTasks, '/engineers/<int:engineer_id>/tasks')
-
-# GET /api/v1/tasks/<id> - returns task data by id
-# POST
-# {
-#   "task_name": "Укусить мангуста",
-#   "task_description": "Мангуст стал слишком борзым. Пришло время показать ему, кто здесь главный",
-#   "start_time": "22.03.2017 15:00:47",
-#   "photo_required": true
-# }
-# /api/v1/tasks/<id> - updates task data by id
-api_v1.add_resource(TaskById, '/tasks/<int:task_id>')
 
 # GET /api/v1/tasks - return all tasks
 # POST
@@ -50,7 +41,7 @@ api_v1.add_resource(Tasks, '/tasks')
 # /api/v1/tasks/<id>/finish
 api_v1.add_resource(TasksFinalizer, '/tasks/<int:task_id>/finish')
 
-# POST
+# G
 # {
 #   "period_start": "21.03.2017 00:00:00",
 #   "period_end": "23.03.2017 00:00:00"
